@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuditPilot — RBI CSITE Compliance Automation | Canara Bank</title>
+  <meta name="description" content="Agentic compliance automation pipeline for Indian banks. Auto-classify cyber incidents, generate RBI CSITE reports, and manage Mitigation Action Plans with evidence-gated closure.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ========== DEADLINE BANNER ========== -->
+<div class="deadline-banner" id="deadline-banner">
+  <div class="banner-left">
+    <div class="banner-icon">⚡</div>
+    <span class="banner-label">RBI CSITE Deadlines</span>
+    <div class="deadline-chip" id="deadline-chip">STANDING BY</div>
+  </div>
+  <div class="banner-center">
+    <div class="timer-block">
+      <span class="timer-label">Initial Notif. (T+2hr)</span>
+      <div class="timer-display" id="timer-initial">--:--:--</div>
+    </div>
+    <div class="timer-divider">|</div>
+    <div class="timer-block">
+      <span class="timer-label">Full Report (T+6hr)</span>
+      <div class="timer-display" id="timer-full">--:--:--</div>
+    </div>
+    <div class="timer-divider">|</div>
+    <div class="timer-block">
+      <span class="timer-label">CERT-In (T+6hr)</span>
+      <div class="timer-display" id="timer-certin">--:--:--</div>
+    </div>
+  </div>
+  <div class="banner-right">
+    <span class="banner-right-label">Time Elapsed</span>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="elapsed-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="brand-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M2 17l10 5 10-5" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M2 12l10 5 10-5" stroke="#10b981" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">AuditPilot</span>
+      <span class="brand-sub">RBI CSITE Compliance Engine v2.1</span>
+    </div>
+  </div>
+
+  <div class="navbar-center">
+    <div class="incident-badge" id="incident-badge" style="display:none">
+      <span class="badge-dot" id="badge-dot"></span>
+      <span id="incident-id-display">IR-CNRB-2026-0847</span>
+      <span class="badge-label">ACTIVE INCIDENT</span>
+    </div>
+  </div>
+
+  <div class="navbar-right">
+    <div class="bank-info">
+      <span class="bank-label">CANARA BANK LTD</span>
+      <span class="bank-sub">CISO Operations · Bengaluru HQ</span>
+    </div>
+    <div class="current-time" id="current-time">--:--:--</div>
+    <div class="nav-avatar" title="Rajesh K. Sharma, CISO">RS</div>
+  </div>
+</nav>
+
+<!-- ========== APP LAYOUT ========== -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Pipeline Stages</div>
+    <nav class="pipeline-nav">
+
+      <button class="stage-btn active" id="stage-soc" onclick="App.nav('soc')">
+        <div class="stage-icon-wrap">
+          <div class="stage-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          </div>
+          <div class="stage-check" id="chk-soc">✓</div>
+        </div>
+        <div class="stage-info">
+          <span class="stage-name">SOC Alert Intake</span>
+          <span class="stage-sub">Incident ingestion</span>
+        </div>
+      </button>
+
+      <button class="stage-btn locked" id="stage-classification" onclick="App.nav('classification')">
+        <div class="stage-icon-wrap">
+          <div class="stage-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="9" height="9"/><rect x="13" y="2" width="9" height="9"/><rect x="13" y="13" width="9" height="9"/><rect x="2" y="13" width="9" height="9"/></svg>
+          </div>
+          <div class="stage-check" id="chk-classification">✓</div>
+        </div>
+        <div class="stage-info">
+          <span class="stage-name">Classification Agent</span>
+          <span class="stage-sub">Regulatory threshold</span>
+        </div>
+      </button>
+
+      <button class="stage-btn locked" id="stage-report" onclick="App.nav('report')">
+        <div class="stage-icon-wrap">
+          <div class="stage-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="stage-check" id="chk-report">✓</div>
+        </div>
+        <div class="stage-info">
+          <span class="stage-name">Report Generation</span>
+          <span class="stage-sub">RBI CSITE format</span>
+        </div>
+      </button>
+
+      <button class="stage-btn locked" id="stage-workbench" onclick="App.nav('workbench')">
+        <div class="stage-icon-wrap">
+          <div class="stage-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="stage-check" id="chk-workbench">✓</div>
+        </div>
+        <div class="stage-info">
+          <span class="stage-name">Compliance Workbench</span>
+          <span class="stage-sub">MAP + evidence vault</span>
+        </div>
+      </button>
+
+      <button class="stage-btn locked" id="stage-audit" onclick="App.nav('audit')">
+        <div class="stage-icon-wrap">
+          <div class="stage-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <div class="stage-check" id="chk-audit">✓</div>
+        </div>
+        <div class="stage-info">
+          <span class="stage-name">Audit Log</span>
+          <span class="stage-sub">Inspection trail</span>
+        </div>
+      </button>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-stat"><span class="stat-label">Incidents Today</span><span class="stat-value">3</span></div>
+      <div class="sidebar-stat"><span class="stat-label">Compliance Rate</span><span class="stat-value green">97.3%</span></div>
+      <div class="sidebar-stat"><span class="stat-label">Avg Report Time</span><span class="stat-value">4m 12s</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ===== VIEW 1: SOC ALERT INTAKE ===== -->
+    <section class="view active" id="soc-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag">Stage 1</div>
+          <h1 class="view-title">SOC Alert Intake</h1>
+          <p class="view-desc">Ingest a cyber incident alert from your SIEM, EDR, or monitoring system. The Classification Agent will analyze it against RBI CSITE reportability criteria.</p>
+        </div>
+        <button class="btn btn-ghost" id="demo-btn" onclick="App.fillDemo()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Load Demo Scenario
+        </button>
+      </div>
+
+      <div class="alert-form-grid">
+        <!-- Card 1: Alert Metadata -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon blue"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
+            <span class="form-card-title">Alert Metadata</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Alert ID</label>
+            <input type="text" class="form-input" id="f-alert-id" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Detection Timestamp</label>
+              <input type="datetime-local" class="form-input" id="f-detect-time">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alert Source <span class="required">*</span></label>
+              <select class="form-select" id="f-source">
+                <option value="">Select source...</option>
+                <option value="edr">EDR (CrowdStrike / SentinelOne)</option>
+                <option value="siem">SIEM (Splunk / QRadar)</option>
+                <option value="dlp">DLP System</option>
+                <option value="firewall">Next-Gen Firewall</option>
+                <option value="swift">SWIFT Monitor</option>
+                <option value="atm">ATM Monitoring</option>
+                <option value="waf">Web App Firewall</option>
+                <option value="manual">Manual Detection</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Incident Type <span class="required">*</span></label>
+              <select class="form-select" id="f-type">
+                <option value="">Select type...</option>
+                <option value="ransomware">Ransomware / Malware</option>
+                <option value="ddos">DDoS Attack</option>
+                <option value="data-breach">Data Breach</option>
+                <option value="web-defacement">Web Defacement</option>
+                <option value="unauthorized-access">Unauthorized Access</option>
+                <option value="phishing">Phishing / BEC</option>
+                <option value="system-outage">Critical System Outage</option>
+                <option value="fraud-transaction">Fraudulent Transaction</option>
+                <option value="swift-fraud">SWIFT Fraud</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Severity <span class="required">*</span></label>
+              <div class="severity-selector">
+                <button class="sev-btn" data-sev="p1" onclick="App.setSev('p1',this)">P1 Critical</button>
+                <button class="sev-btn" data-sev="p2" onclick="App.setSev('p2',this)">P2 High</button>
+                <button class="sev-btn" data-sev="p3" onclick="App.setSev('p3',this)">P3 Medium</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Affected Systems -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <span class="form-card-title">Affected Systems</span>
+          </div>
+          <div class="systems-grid">
+            <label class="system-check"><input type="checkbox" id="s-cbs"     value="cbs"><span class="system-label"><span class="sys-icon">🏛️</span>Core Banking (CBS)</span></label>
+            <label class="system-check"><input type="checkbox" id="s-swift"   value="swift"><span class="system-label"><span class="sys-icon">🌐</span>SWIFT / Messaging</span></label>
+            <label class="system-check"><input type="checkbox" id="s-ib"      value="internet-banking"><span class="system-label"><span class="sys-icon">💻</span>Internet Banking</span></label>
+            <label class="system-check"><input type="checkbox" id="s-mb"      value="mobile-banking"><span class="system-label"><span class="sys-icon">📱</span>Mobile Banking</span></label>
+            <label class="system-check"><input type="checkbox" id="s-atm"     value="atm"><span class="system-label"><span class="sys-icon">🏧</span>ATM Network</span></label>
+            <label class="system-check"><input type="checkbox" id="s-upi"     value="upi"><span class="system-label"><span class="sys-icon">💳</span>UPI / Payments</span></label>
+            <label class="system-check"><input type="checkbox" id="s-rtgs"    value="rtgs-neft"><span class="system-label"><span class="sys-icon">⚡</span>RTGS / NEFT</span></label>
+            <label class="system-check"><input type="checkbox" id="s-treasury"value="treasury"><span class="system-label"><span class="sys-icon">📊</span>Treasury System</span></label>
+            <label class="system-check"><input type="checkbox" id="s-tf"      value="trade-finance"><span class="system-label"><span class="sys-icon">🚢</span>Trade Finance</span></label>
+            <label class="system-check"><input type="checkbox" id="s-dc"      value="datacenter"><span class="system-label"><span class="sys-icon">🖥️</span>Data Centre Infra</span></label>
+          </div>
+        </div>
+
+        <!-- Card 3: Impact Assessment -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <span class="form-card-title">Impact Assessment</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Financial Exposure (₹)</label>
+              <input type="number" class="form-input" id="f-financial" placeholder="e.g. 25000000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Customers Impacted</label>
+              <input type="number" class="form-input" id="f-customers" placeholder="e.g. 15000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Incident Description <span class="required">*</span></label>
+            <textarea class="form-textarea" id="f-desc" rows="6" placeholder="Describe the incident — attack vector, IOCs, affected assets, initial observations, C2 activity..."></textarea>
+          </div>
+        </div>
+
+        <!-- Card 4: Reporting Officer -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <span class="form-card-title">Reporting Officer</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" id="f-officer" value="Rajesh Kumar Sharma">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Designation</label>
+              <input type="text" class="form-input" id="f-desig" value="CISO">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-input" id="f-dept" value="Information Security">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Official Email</label>
+            <input type="email" class="form-input" id="f-email" value="ciso@canarabank.co.in">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input type="tel" class="form-input" id="f-phone" value="+91-80-2223-0000">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <div class="action-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Submitting starts the RBI reporting deadline clock. Ensure detection timestamp is accurate.
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="App.submit()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Feed to Classification Agent
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 2: CLASSIFICATION AGENT ===== -->
+    <section class="view" id="classification-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag agent-tag">Agent 1 of 3</div>
+          <h1 class="view-title">Classification Agent</h1>
+          <p class="view-desc">Analyzing SOC alert against RBI CSITE regulatory threshold matrix, CERT-In Directions 2022, and Master Direction – IT Framework 2024.</p>
+        </div>
+        <div class="agent-status-pill">
+          <span class="agent-pulse"></span>
+          <span id="a1-status">Initializing...</span>
+        </div>
+      </div>
+
+      <div class="classification-layout">
+        <!-- Agent Panel -->
+        <div class="agent-panel">
+          <div class="agent-avatar-wrap">
+            <div class="agent-avatar" id="a1-avatar">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                <circle cx="9" cy="13" r="1.5" fill="currentColor"/><circle cx="15" cy="13" r="1.5" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="agent-name-block">
+              <span class="agent-name">Classification Agent</span>
+              <span class="agent-version">v2.1 · RBI CSITE Rule Engine</span>
+            </div>
+          </div>
+          <div class="processing-steps" id="proc-steps"></div>
+          <div class="confidence-block" id="conf-block" style="display:none">
+            <div class="confidence-header">
+              <span>Classification Confidence</span>
+              <span class="confidence-pct" id="conf-pct">0%</span>
+            </div>
+            <div class="confidence-bar"><div class="confidence-fill" id="conf-fill"></div></div>
+          </div>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="result-panel" id="result-panel">
+          <div class="result-loading" id="result-loading">
+            <div class="loading-spinner"></div>
+            <span>Agent is processing the alert...</span>
+          </div>
+          <div class="result-content" id="result-content" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="view-actions" id="a1-actions" style="display:none">
+        <button class="btn btn-ghost" onclick="App.nav('soc')">← Back to Alert</button>
+        <button class="btn btn-primary btn-lg" onclick="App.startReport()">
+          Generate Incident Report
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 3: REPORT GENERATION AGENT ===== -->
+    <section class="view" id="report-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag agent-tag">Agent 2 of 3</div>
+          <h1 class="view-title">Report Generation Agent</h1>
+          <p class="view-desc">Auto-drafting the complete RBI CSITE Cyber Security Incident Report in the prescribed annexure format — all 9 sections, zero human input.</p>
+        </div>
+        <div class="agent-status-pill">
+          <span class="agent-pulse"></span>
+          <span id="a2-status">Drafting report...</span>
+        </div>
+      </div>
+
+      <div class="report-layout">
+        <!-- Agent Status Panel -->
+        <div class="report-agent-panel">
+          <div class="report-steps-list" id="report-steps"></div>
+          <div class="report-stats" id="report-stats" style="display:none">
+            <div class="report-stat"><span class="rstat-value" id="rs-sections">9</span><span class="rstat-label">Sections</span></div>
+            <div class="report-stat"><span class="rstat-value" id="rs-fields">47</span><span class="rstat-label">Auto-filled</span></div>
+            <div class="report-stat"><span class="rstat-value" id="rs-time">—</span><span class="rstat-label">Gen. Time</span></div>
+          </div>
+          <div class="report-actions-panel" id="report-act-panel" style="display:none">
+            <button class="btn btn-ghost btn-sm" onclick="window.print()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Export PDF
+            </button>
+            <button class="btn btn-primary" onclick="App.convertToMAP()">
+              Convert to MAP →
+            </button>
+          </div>
+        </div>
+
+        <!-- Report Preview -->
+        <div class="report-preview-wrap">
+          <div class="report-preview">
+            <div class="report-doc" id="report-doc">
+              <div class="result-loading" style="min-height:400px">
+                <div class="loading-spinner"></div>
+                <span>Waiting for report generation...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 4: COMPLIANCE WORKBENCH ===== -->
+    <section class="view" id="workbench-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag workbench-tag">Workbench</div>
+          <h1 class="view-title">Compliance Workbench</h1>
+          <p class="view-desc">Mitigation Action Plan with team assignments, live deadline timers, and evidence-gated closure validation.</p>
+        </div>
+        <div class="workbench-header-right">
+          <div class="wb-status-badge" id="wb-rbi-badge"><span class="badge-dot amber"></span>RBI PENDING</div>
+          <div class="wb-status-badge" id="wb-certin-badge"><span class="badge-dot amber"></span>CERT-In PENDING</div>
+        </div>
+      </div>
+
+      <!-- Timers + Progress -->
+      <div class="wb-subheader">
+        <div class="wb-timers">
+          <div class="wb-timer-card crit">
+            <span class="wb-timer-icon">⏰</span>
+            <div class="wb-timer-info">
+              <span class="wb-timer-label">RBI Full Report (T+6hr)</span>
+              <div class="wb-timer-value" id="wb-t1">--:--:--</div>
+            </div>
+          </div>
+          <div class="wb-timer-card amber">
+            <span class="wb-timer-icon">🛡️</span>
+            <div class="wb-timer-info">
+              <span class="wb-timer-label">CERT-In Deadline</span>
+              <div class="wb-timer-value" id="wb-t2">--:--:--</div>
+            </div>
+          </div>
+          <div class="wb-timer-card">
+            <span class="wb-timer-icon">📋</span>
+            <div class="wb-timer-info">
+              <span class="wb-timer-label">Post-Incident Report</span>
+              <div class="wb-timer-value" id="wb-t3">21d 00:00</div>
+            </div>
+          </div>
+        </div>
+        <div class="wb-progress-section">
+          <div class="wb-progress-header">
+            <span>MAP Closure Progress</span>
+            <span id="wb-prog-text">0 / 10 tasks</span>
+          </div>
+          <div class="wb-progress-track"><div class="wb-progress-fill" id="wb-prog-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- Kanban + Right Panel -->
+      <div class="wb-layout">
+        <div class="kanban-section">
+          <div class="kanban-board">
+            <div class="kanban-col">
+              <div class="kanban-col-header open"><span class="col-title">Open</span><span class="col-count" id="cnt-open">0</span></div>
+              <div class="kanban-col-body" id="col-open"
+                   ondragover="event.preventDefault()"
+                   ondrop="App.drop(event,'open')"
+                   ondragenter="this.classList.add('drag-over')"
+                   ondragleave="this.classList.remove('drag-over')"></div>
+            </div>
+            <div class="kanban-col">
+              <div class="kanban-col-header inprogress"><span class="col-title">In Progress</span><span class="col-count" id="cnt-inprogress">0</span></div>
+              <div class="kanban-col-body" id="col-inprogress"
+                   ondragover="event.preventDefault()"
+                   ondrop="App.drop(event,'inprogress')"
+                   ondragenter="this.classList.add('drag-over')"
+                   ondragleave="this.classList.remove('drag-over')"></div>
+            </div>
+            <div class="kanban-col">
+              <div class="kanban-col-header closed"><span class="col-title">Closed</span><span class="col-count" id="cnt-closed">0</span></div>
+              <div class="kanban-col-body" id="col-closed"
+                   ondragover="event.preventDefault()"
+                   ondrop="App.drop(event,'closed')"
+                   ondragenter="this.classList.add('drag-over')"
+                   ondragleave="this.classList.remove('drag-over')"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-right-panel">
+          <div class="team-matrix">
+            <div class="panel-title">Team Assignment Matrix</div>
+            <div class="team-list" id="team-list"></div>
+          </div>
+          <div class="live-feed">
+            <div class="panel-title"><span>Live Activity Feed</span><span class="live-dot">● LIVE</span></div>
+            <div class="feed-list" id="feed-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 5: AUDIT LOG ===== -->
+    <section class="view" id="audit-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag green-tag">Audit</div>
+          <h1 class="view-title">Audit Log</h1>
+          <p class="view-desc">Complete, immutable pipeline event log. Every agent action, human decision, and system event — timestamped and inspection-ready.</p>
+        </div>
+        <div class="audit-header-right">
+          <div class="inspection-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            INSPECTION READY
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="App.exportCSV()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="audit-stats-row">
+        <div class="audit-stat-card"><span class="ast-value" id="ast-total">0</span><span class="ast-label">Total Events</span></div>
+        <div class="audit-stat-card green"><span class="ast-value" id="ast-agents">0</span><span class="ast-label">Agent Actions</span></div>
+        <div class="audit-stat-card blue"><span class="ast-value" id="ast-human">0</span><span class="ast-label">Human Actions</span></div>
+        <div class="audit-stat-card amber"><span class="ast-value" id="ast-pending">0</span><span class="ast-label">Pending Tasks</span></div>
+      </div>
+
+      <div class="audit-filter-bar">
+        <input type="text" class="form-input audit-search" id="audit-search" placeholder="🔍  Search events, actors, actions..." oninput="App.filterLog()">
+        <select class="form-select audit-filter" id="audit-type" onchange="App.filterLog()">
+          <option value="">All Actor Types</option>
+          <option value="agent">Agent Actions</option>
+          <option value="human">Human Actions</option>
+          <option value="system">System Events</option>
+        </select>
+        <select class="form-select audit-filter" id="audit-stage" onchange="App.filterLog()">
+          <option value="">All Stages</option>
+          <option value="System">System</option>
+          <option value="SOC Intake">SOC Intake</option>
+          <option value="Classification">Classification</option>
+          <option value="Report Generation">Report Generation</option>
+          <option value="Workbench">Workbench</option>
+        </select>
+      </div>
+
+      <div class="audit-table-wrap">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Timestamp</th><th>Stage</th>
+              <th>Actor</th><th>Type</th><th>Action</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr class="audit-empty-row"><td colspan="7">No events logged yet. Start by submitting a SOC alert.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div><!-- /.app-layout -->
+
+<!-- ========== EVIDENCE DRAWER ========== -->
+<div class="evidence-drawer" id="ev-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title-block">
+      <h3 class="drawer-title" id="d-title">Task Details</h3>
+      <div class="drawer-task-meta" id="d-meta"></div>
+    </div>
+    <button class="drawer-close" onclick="App.closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-title">Description</div>
+      <p class="drawer-desc" id="d-desc"></p>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Assignee</div>
+      <div class="drawer-assignee" id="d-assignee"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Evidence Vault</div>
+      <div class="evidence-upload-area" onclick="App.uploadEvidence()">
+        <div class="upload-icon">📎</div>
+        <div class="upload-text">Click to attach evidence</div>
+        <div class="upload-sub">Logs · screenshots · forensic images · emails · portal confirmations</div>
+      </div>
+      <div class="evidence-list" id="d-evidence"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Investigation Notes</div>
+      <textarea class="form-textarea" id="d-note" rows="3" placeholder="Add findings, IOC details, or investigation notes..."></textarea>
+      <button class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="App.addNote()">+ Add Note</button>
+      <div class="notes-list" id="d-notes"></div>
+    </div>
+    <div class="drawer-verification">
+      <div class="verification-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" id="d-verified" onchange="App.toggleVerified()">
+          <span class="toggle-slider"></span>
+        </label>
+        <div class="toggle-info">
+          <div class="toggle-label">Mark Evidence as Verified</div>
+          <div class="toggle-sub">Required before this task can be closed</div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-actions">
+      <button class="btn btn-ghost btn-sm" onclick="App.moveDrawerTask('inprogress')">→ In Progress</button>
+      <button class="btn btn-success btn-sm" id="d-close-btn" onclick="App.closeDrawerTask()" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Close Task
+      </button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="App.closeDrawer()"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
