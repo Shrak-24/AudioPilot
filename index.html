@@ -7,7 +7,7 @@
   <meta name="description" content="Agentic compliance automation pipeline for Indian banks. Auto-classify cyber incidents, generate RBI CSITE reports, and manage Mitigation Action Plans with evidence-gated closure.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=purple-theme">
 </head>
 <body>
 
@@ -72,7 +72,7 @@
       <span class="bank-sub">CISO Operations · Bengaluru HQ</span>
     </div>
     <div class="current-time" id="current-time">--:--:--</div>
-    <div class="nav-avatar" title="Rajesh K. Sharma, CISO">RS</div>
+    <button class="nav-avatar" id="profile-trigger" type="button" title="Open Rajesh K. Sharma profile" aria-label="Open Rajesh K. Sharma profile" onclick="App.openProfile()">RS</button>
   </div>
 </nav>
 
@@ -572,6 +572,45 @@
       </div>
     </section>
 
+    <!-- ===== PROFILE VIEW ===== -->
+    <section class="view profile-view" id="profile-view">
+      <div class="view-header">
+        <div class="view-header-left">
+          <div class="view-tag profile-tag">Account</div>
+          <h1 class="view-title">Profile</h1>
+          <p class="view-desc">Your secure operator profile and CISO workspace preferences.</p>
+        </div>
+        <button class="btn btn-ghost" type="button" onclick="App.nav('soc')">← Back to dashboard</button>
+      </div>
+      <div class="profile-layout">
+        <article class="profile-hero-card">
+          <div class="profile-hero-orbit"></div>
+          <div class="profile-avatar-xl">RS</div>
+          <div class="profile-hero-copy">
+            <span class="profile-online"><i></i> Online · On duty</span>
+            <h2>Rajesh K. Sharma</h2>
+            <p>Chief Information Security Officer</p>
+            <span class="profile-company">CANARA BANK LTD · Bengaluru HQ</span>
+          </div>
+        </article>
+        <article class="profile-info-card">
+          <div class="profile-card-heading"><span>Operator details</span><span class="profile-mini-badge">VERIFIED</span></div>
+          <div class="profile-info-grid">
+            <div><span>Department</span><strong>Information Security</strong></div>
+            <div><span>Official email</span><strong>ciso@canarabank.co.in</strong></div>
+            <div><span>Contact number</span><strong>+91 80 2223 0000</strong></div>
+            <div><span>Access level</span><strong>Incident Commander</strong></div>
+          </div>
+        </article>
+        <article class="profile-preferences-card">
+          <div class="profile-card-heading"><span>Workspace preferences</span><span class="profile-spark">✦</span></div>
+          <div class="preference-row"><div><strong>RBI deadline alerts</strong><small>Show countdown warnings in the workspace</small></div><span class="preference-on">ON</span></div>
+          <div class="preference-row"><div><strong>Evidence-gated closure</strong><small>Require verified evidence before task closure</small></div><span class="preference-on">ON</span></div>
+          <div class="preference-row"><div><strong>Theme</strong><small>AuditPilot purple glass workspace</small></div><span class="preference-theme">PURPLE</span></div>
+        </article>
+      </div>
+    </section>
+
   </main>
 </div><!-- /.app-layout -->
 
@@ -631,7 +670,7 @@
 </div>
 <div class="overlay" id="overlay" onclick="App.closeDrawer()"></div>
 
-<script src="app.js"></script>
-<script src="api.js"></script>
+<script src="app.js?v=purple-theme"></script>
+<script src="api.js?v=purple-theme"></script>
 </body>
 </html>

@@ -34,6 +34,13 @@ const App = (() => {
     if (view === 'audit') renderAuditTable();
   }
 
+  function openProfile() {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('profile-view')?.classList.add('active');
+    document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
+    S.currentView = 'profile';
+  }
+
   function unlock(stage) {
     if (S.unlocked.includes(stage)) return;
     S.unlocked.push(stage);
@@ -968,13 +975,19 @@ const App = (() => {
     document.getElementById('f-alert-id').value = '';
     document.getElementById('f-detect-time').value = toLocalISOString(new Date());
 
+    // Keep the app's interaction affordance consistent: disabled workflow controls
+    // explain their state through the app, without switching to a prohibited cursor.
+    document.querySelectorAll('.stage-btn.locked, .btn:disabled').forEach((el) => {
+      el.style.setProperty('cursor', 'pointer', 'important');
+    });
+
     // Audit history is loaded from the immutable server log on demand.
   }
 
   document.addEventListener('DOMContentLoaded', init);
 
   /* ─── PUBLIC API ─────────────────────────────────────────── */
-  return { nav, fillDemo, setSev, submit, drop, uploadEvidence, addNote, toggleVerified,
+  return { nav, openProfile, fillDemo, setSev, submit, drop, uploadEvidence, addNote, toggleVerified,
            moveDrawerTask, closeDrawerTask, closeDrawer, convertToMAP, startReport,
            filterLog, exportCSV, window_print: ()=>window.print() };
 
