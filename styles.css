@@ -1099,6 +1099,11 @@ body::before {
 .form-input, .form-select, .form-textarea { background: rgba(255,255,255,0.72); color: #32143d; border-color: rgba(123,44,191,0.18); }
 .form-select option { background: white; color: #32143d; }
 .form-label, .panel-title, .drawer-section-title, .ast-label { color: #8d7096; }
+.system-check { background: #f4d9f1; border-color: rgba(89,32,105,0.16); }
+.system-check:hover { background: #efd0eb; border-color: rgba(89,32,105,0.28); }
+.system-label { color: #171018; }
+.system-check:has(input:checked) { background: #e9bfe3; border-color: rgba(123,44,191,0.38); }
+.system-check:has(input:checked) .system-label { color: #171018; }
 .btn-primary { background: linear-gradient(135deg, #d946ef, #7b2cbf); box-shadow: 0 7px 18px rgba(123,44,191,0.28); }
 .btn-primary:hover { background: linear-gradient(135deg, #e879f9, #8b35c8); }
 .btn-ghost { color: #6b3d78; border-color: rgba(123,44,191,0.2); }
