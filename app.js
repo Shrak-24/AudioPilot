@@ -47,27 +47,8 @@ const App = (() => {
     document.getElementById(`chk-${stage}`).style.display = 'flex';
   }
 
-  /* ─── DEMO DATA ──────────────────────────────────────────── */
-  function fillDemo() {
-    const detect = new Date(Date.now() - 8.5 * 60 * 1000); // 8.5 min ago
-    document.getElementById('f-alert-id').value      = 'SOC-2026-0847';
-    document.getElementById('f-detect-time').value   = toLocalISOString(detect);
-    document.getElementById('f-source').value        = 'edr';
-    document.getElementById('f-type').value          = 'ransomware';
-    document.getElementById('f-financial').value     = '25000000';
-    document.getElementById('f-customers').value     = '15000';
-    document.getElementById('f-desc').value          =
-      'CrowdStrike Falcon EDR detected LockBit 3.0 ransomware execution on CBS primary node (CNRB-CBSPRD-01). ' +
-      'Process chain: svchost.exe → msiexec.exe → lockbit3.exe. Lateral movement identified originating from ' +
-      'domain controller CNRB-DC-01 via CVE-2023-23397 exploit. Encryption attempt observed on file server ' +
-      'cluster FS-01, FS-02, FS-03 (est. 3.2TB data at risk). C2 communication detected to 185.220.101.47:443 ' +
-      '(TOR exit node). SWIFT messaging gateway SWG-PROD showing anomalous authentication attempts from ' +
-      'compromised service account CNRB\\svc-batch01. Ransomware note found: "All your CBS files are encrypted."';
-    ['s-cbs','s-swift','s-ib'].forEach(id => { document.getElementById(id).checked = true; });
-    setSev('p1', document.querySelector('.sev-btn[data-sev="p1"]'));
-    toast('Demo loaded: LockBit 3.0 on Canara Bank CBS', 'success');
-    log('SOC Intake','system','AuditPilot','Demo scenario pre-loaded: LockBit 3.0 Ransomware targeting CBS/SWIFT','Complete');
-  }
+  /* Sample data is intentionally not bundled. Incidents must come from the API. */
+  function fillDemo() { toast('Demo data is disabled. Enter a real SOC alert payload.', 'info'); }
 
   function setSev(sev, btn) {
     document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('active'));
@@ -231,7 +212,7 @@ const App = (() => {
 
     return {
       reportable, reasons,
-      confidence: reportable ? 91 + Math.random() * 7 : 88 + Math.random() * 8,
+      confidence: reportable ? Math.min(99, 78 + reasons.length * 4) : 88,
       initDeadline: d.severity === 'p1' ? 2 : 6,
       category: incidentCat(d.type),
       certIn: reportable,
@@ -984,12 +965,10 @@ const App = (() => {
     clk(); setInterval(clk, 1000);
 
     // Auto-fill Alert ID and detection time
-    document.getElementById('f-alert-id').value = `SOC-2026-${Math.floor(800 + Math.random() * 199)}`;
+    document.getElementById('f-alert-id').value = '';
     document.getElementById('f-detect-time').value = toLocalISOString(new Date());
 
-    // Seed audit log
-    log('System','system','AuditPilot','Engine initialized. RBI CSITE Compliance Pipeline v2.1 armed and ready.','Complete');
-    log('System','system','AuditPilot','Canara Bank CISO credentials loaded. All 5 pipeline stages standing by.','Complete');
+    // Audit history is loaded from the immutable server log on demand.
   }
 
   document.addEventListener('DOMContentLoaded', init);

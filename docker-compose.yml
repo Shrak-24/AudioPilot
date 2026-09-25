@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: auditpilot
+      POSTGRES_USER: auditpilot
+      POSTGRES_PASSWORD: auditpilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - auditpilot-postgres:/var/lib/postgresql/data
+volumes:
+  auditpilot-postgres:

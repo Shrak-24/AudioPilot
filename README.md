@@ -2,7 +2,7 @@
 
 > Agentic compliance pipeline for Indian banks. Turns a raw SOC alert into a filed RBI incident report in under 6 minutes.
 
-![AuditPilot Dashboard](https://img.shields.io/badge/Status-Live%20Demo-brightgreen) ![RBI CSITE](https://img.shields.io/badge/Framework-RBI%20CSITE-blue) ![No Backend](https://img.shields.io/badge/Backend-None-lightgrey)
+![AuditPilot Dashboard](https://img.shields.io/badge/Status-Backend%20Enabled-brightgreen) ![RBI CSITE](https://img.shields.io/badge/Framework-RBI%20CSITE-blue) ![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
 
 ---
 
@@ -38,15 +38,15 @@ SOC Alert → [Classification Agent] → [Report Generation Agent] → [Complian
 
 ---
 
-## Demo
+## Run locally
 
-**Fastest path:**
-1. Open `index.html` in any browser
-2. Click **"Load Demo Scenario"** — pre-fills a LockBit 3.0 ransomware attack on CBS/SWIFT
-3. Click **"Feed to Classification Agent"** — watch it classify in real-time
-4. Follow the pipeline through Report → Workbench → evidence upload → closure
+The UI is now an API client. It does not persist incidents, manufacture evidence, or calculate compliance deadlines in the browser.
 
-Full pipeline demo takes **~3 minutes**.
+1. Copy `.env.example` to `.env` and set `OPENAI_API_KEY`.
+2. Start PostgreSQL: `docker compose up -d postgres`.
+3. Install dependencies: `pip install -r backend/requirements.txt`.
+4. Start the service from the repository root: `uvicorn backend.main:app --reload`.
+5. Open `http://localhost:8000` and submit a real SOC alert.
 
 ---
 
@@ -56,10 +56,13 @@ Full pipeline demo takes **~3 minutes**.
 |---|---|
 | Structure | HTML5 (semantic) |
 | Styling | Vanilla CSS (custom design system, glassmorphism, animations) |
-| Logic | Vanilla JavaScript (IIFE module pattern, no frameworks) |
+| Logic | Vanilla JavaScript API client |
 | Fonts | Inter + JetBrains Mono (Google Fonts) |
-| Backend | None — runs fully offline |
-| Data | In-memory state + localStorage |
+| Backend | FastAPI + SQLAlchemy + PostgreSQL |
+| Data | PostgreSQL; evidence files stored by content hash |
+| Classification | Deterministic RBI/CERT-In rule engine |
+| Report generation | OpenAI Chat Completions with JSON schema validation |
+| Audit | Hash-chained, PostgreSQL append-only audit table |
 
 ---
 
@@ -79,7 +82,10 @@ Full pipeline demo takes **~3 minutes**.
 canara/
 ├── index.html    # Shell + all 5 views (SOC → Classification → Report → Workbench → Audit)
 ├── styles.css    # Full design system — 700+ lines, dark theme, glassmorphism
-├── app.js        # State machine, agent simulations, timers, kanban, audit log — 1000 lines
+├── api.js        # Server-backed UI adapter
+├── app.js        # Existing presentation helpers and layout behavior
+├── backend/      # FastAPI application, models, rules, report agent, audit chain
+├── docker-compose.yml
 └── README.md
 ```
 
